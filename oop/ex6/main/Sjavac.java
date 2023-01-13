@@ -13,7 +13,7 @@ public class Sjavac {
     public static void main(String[] args){
         CodeChecker  checker = CodeChecker.getInstance();
         //int num = checker.checkCode(args[FILE_NAME_IND]);
-        int num = checker.checkCode("C:\\Users\\agame\\IdeaProjects\\EX6\\oop\\ex6\\main\\test2.txt");
+        int num = checker.checkCode("oop/ex6/main/test2.txt");
         if (num == IO_ERROR){
             System.err.println(checker.getErr());
         }

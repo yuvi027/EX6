@@ -85,7 +85,7 @@ public class CodeChecker {
                    return ILLEGAL;
                }
                else{
-                   return complieVariable();
+                   //return complieVariable();
                }
         }
         return ILLEGAL;
