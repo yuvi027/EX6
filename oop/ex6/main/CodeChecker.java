@@ -17,14 +17,19 @@ public class CodeChecker {
     private static final String BLANK_LINE_REGEX = "\\s*";
     private static final String[] typesOfVariables = {"int", "double", "String", "boolean", "char"};
     private static final String ILLEGAL_NAME_REGEX = "_|[0-9].*";
+    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
+    private static final String INT_REGEX = "^((?:(?:.*?)\s*(?:=\s*(\d+)))?,?)+?;$";
 
     private static String error;
     private static ArrayList<String> linesOfFile;
-//    private static HashMap<>
     private static CodeChecker codeChecker;
     private static Pattern oneLinerComment;
     private static Pattern emptyLinePattern;
     private static Pattern illegalVariableName;
+
+    //saves the variable name, and it's type for the global variables
+    private  HashMap<String, String> globalVariables;
+
 
 
     private CodeChecker() {
@@ -32,6 +37,7 @@ public class CodeChecker {
         oneLinerComment = Pattern.compile(COMMENT_REGEX);
         emptyLinePattern = Pattern.compile(BLANK_LINE_REGEX);
         illegalVariableName = Pattern.compile(ILLEGAL_NAME_REGEX);
+        //intPattern = Pattern.compile();
     }
 
     public static CodeChecker getInstance() {
@@ -91,12 +97,55 @@ public class CodeChecker {
         return error;
     }
 
-    private int compileInt(String variable) {
-        String[] tokenOfVariable = variable.split(" ");
+
+    //int a = 1, b = 7, double = 40;
+    //char a = 5+3;
+    private int compileVariable(String variable, String type) {
+        String[] tokenOfVariable = variable.split(",");
         if (tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)) {
             return ILLEGAL;
         } else {
             //TODO: finish
+            for(String token:tokenOfVariable){
+                if(globalVariables.containsKey(token)){
+                    if(!globalVariables.get(token).equals(type))
+                        return ILLEGAL;
+                    else {
+                        //Check if valid
+                    }
+                }
+                else{
+                    //if valid then
+                    Pattern ifInitialization = Pattern.compile("=");
+                    Matcher initializationMatcher = ifInitialization.matcher(token);
+                    if(initializationMatcher.find()){
+                        switch (type){
+                            case "int":
+                                //Check if int is legal
+                                if(!token.matches(INT_REGEX)){
+                                    return ILLEGAL;
+                                }
+                                break;
+                            case "double":
+                                //check if double is legal
+                                break;
+                            case "String":
+                                //check if String is legal
+                                break;
+                            case "boolean":
+                                //check if boolean is legal
+                                break;
+                            case "char":
+                                //check if boolean is legal
+                                break;
+                        }
+                    }
+
+                    globalVariables.put(token, type);
+                    //else return INVALID
+                }
+
+            }
         }
         return ILLEGAL;
     }
