@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,11 +20,11 @@ public class CodeChecker {
 
     private static String error;
     private static ArrayList<String> linesOfFile;
+//    private static HashMap<>
     private static CodeChecker codeChecker;
     private static Pattern oneLinerComment;
     private static Pattern emptyLinePattern;
     private static Pattern illegalVariableName;
-
 
 
     private CodeChecker() {
@@ -31,45 +32,57 @@ public class CodeChecker {
         oneLinerComment = Pattern.compile(COMMENT_REGEX);
         emptyLinePattern = Pattern.compile(BLANK_LINE_REGEX);
         illegalVariableName = Pattern.compile(ILLEGAL_NAME_REGEX);
-
-
     }
 
-    public static CodeChecker getInstance(){
-        if(codeChecker == null){
-            codeChecker =  new CodeChecker();
+    public static CodeChecker getInstance() {
+        if (codeChecker == null) {
+            codeChecker = new CodeChecker();
         }
         return codeChecker;
     }
 
-    public int checkCode(String fileName){
-        return fileOpener(fileName);
-
+    public int checkCode(String fileName) {
+        try {
+            fileOpener(fileName);
+            for (String line :linesOfFile) {
+                compileLine(line);
+            }
+        } catch (IOException e) {
+            error = e.getMessage();
+            return ERROR;
+        } catch (Exception e) {
+            error = e.getMessage();
+            return ILLEGAL;
+        }
+        return LEGAL;
         //Matcher m = oneLinerComment.matcher("//This is a comment");
         //System.out.println(m.matches());
         //return 0;
     }
 
-    private static int fileOpener(String fileName){
-        try(FileReader reader = new FileReader(fileName);
-            BufferedReader bufferedReader = new BufferedReader(reader)){
+    private int compileLine(String line) throws Exception{
+
+        return LEGAL;
+    }
+
+    private static int fileOpener(String fileName) throws IOException {
+        try (FileReader reader = new FileReader(fileName);
+             BufferedReader bufferedReader = new BufferedReader(reader)) {
             String s;
             Matcher blankLineMatcher;
             Matcher commentMatcher;
 
-            while((s = bufferedReader.readLine()) != null){
+            while ((s = bufferedReader.readLine()) != null) {
                 blankLineMatcher = oneLinerComment.matcher(s);
                 commentMatcher = emptyLinePattern.matcher(s);
-                if(blankLineMatcher.matches() || commentMatcher.matches()){
+                if (blankLineMatcher.matches() || commentMatcher.matches()) {
                     continue;
                 }
                 linesOfFile.add(s);
             }
             System.out.println(linesOfFile.toString());
-        }
-        catch (IOException e){
-            error = e.getMessage();
-            return ERROR;
+        } catch (IOException e) {
+            throw e;
         }
         return LEGAL;
     }
@@ -78,15 +91,12 @@ public class CodeChecker {
         return error;
     }
 
-    private int parseVariable(String variable, String type){
+    private int compileInt(String variable) {
         String[] tokenOfVariable = variable.split(" ");
-           if(tokenOfVariable[0].equals(type)){
-               if(tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)){
-                   return ILLEGAL;
-               }
-               else{
-                   //return complieVariable();
-               }
+        if (tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)) {
+            return ILLEGAL;
+        } else {
+            //TODO: finish
         }
         return ILLEGAL;
     }

@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Sjavac {
 
-    private static final int IO_ERROR = 2;
+    private static final int LEGAL = 0;
     private static final int FILE_NAME_IND = 2;
 
 
@@ -14,7 +14,7 @@ public class Sjavac {
         CodeChecker  checker = CodeChecker.getInstance();
         //int num = checker.checkCode(args[FILE_NAME_IND]);
         int num = checker.checkCode("oop/ex6/main/test2.txt");
-        if (num == IO_ERROR){
+        if (num != LEGAL){
             System.err.println(checker.getErr());
         }
         else{
