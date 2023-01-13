@@ -1,2 +1,2 @@
-Hello world, \n
+Hello world, \r\n
 How are you today?
