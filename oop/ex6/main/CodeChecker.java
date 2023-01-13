@@ -141,7 +141,7 @@ public class CodeChecker {
                         }
                     }
 
-                    globalVariables.put(token, type);
+                    globalVariables.put(token, type); //TODO: change HashMap
                     //else return INVALID
                 }
 
