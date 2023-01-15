@@ -110,15 +110,15 @@ public class CodeChecker {
 
     //int a = 1, b = 7, double = 40;
     //char a = 5+3;
-    private int compileVariable(String variable, String type) {
+    private int compileVariable(String variable, String type, HashMap<String, String> variablesMap) {
         String[] tokenOfVariable = variable.split(",");
         if (tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)) {
             return ILLEGAL;
         } else {
             //TODO: finish
             for (String token : tokenOfVariable) {
-                if (globalVariables.containsKey(token)) {
-                    if (!globalVariables.get(token).equals(type))
+                if (variablesMap.containsKey(token)) {
+                    if (!variablesMap.get(token).equals(type))
                         return ILLEGAL;
                     else {
                         //Check if valid
@@ -150,7 +150,7 @@ public class CodeChecker {
                         }
                     }
 
-                    globalVariables.put(token, type); //TODO: change HashMap
+                    variablesMap.put(token, type);
                     //else return INVALID
                 }
 
