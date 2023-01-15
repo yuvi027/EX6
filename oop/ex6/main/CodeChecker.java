@@ -28,7 +28,7 @@ public class CodeChecker {
     private static Pattern illegalVariableName;
 
     //saves the variable name, and it's type for the global variables
-    private HashMap<String, String> globalVariables;
+    private HashMap<String, HashMap<String, String>> variables;
 
 
     private CodeChecker() {
@@ -67,7 +67,12 @@ public class CodeChecker {
 
     private int compileLine(String line) throws Exception {
         if (line.charAt(line.length()) == ';') {
-//            return compileVariable(line);
+            String[] words = line.split(" ");
+            for (String type: typesOfVariables) {
+                if(type.equals(words[0])) return compileVariable(line, words[0]);
+            }
+            if(words[0])
+            return compileVariable(line, words[0]);
         } else if (line.charAt(line.length()) == '{') {
 //            return compileMethod();
         } else if (line.charAt(line.length()) == '}') {
