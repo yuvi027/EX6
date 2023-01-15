@@ -26,9 +26,10 @@ public class CodeChecker {
     private static Pattern oneLinerComment;
     private static Pattern emptyLinePattern;
     private static Pattern illegalVariableName;
+    private static int index;
 
     //saves the variable name, and it's type for the global variables
-    private HashMap<String, HashMap<String, String>> variables;
+    private HashMap<Integer, HashMap<String, String>> variables;
 
 
     private CodeChecker() {
@@ -36,6 +37,8 @@ public class CodeChecker {
         oneLinerComment = Pattern.compile(COMMENT_REGEX);
         emptyLinePattern = Pattern.compile(BLANK_LINE_REGEX);
         illegalVariableName = Pattern.compile(ILLEGAL_NAME_REGEX);
+        index = 1;
+        variables = new HashMap<>();
         //intPattern = Pattern.compile();
     }
 
@@ -49,6 +52,7 @@ public class CodeChecker {
     public int checkCode(String fileName) {
         try {
             fileOpener(fileName);
+            variables.put(index, new HashMap<>());
             for (String line : linesOfFile) {
                 compileLine(line);
             }
@@ -69,10 +73,10 @@ public class CodeChecker {
         if (line.charAt(line.length()) == ';') {
             String[] words = line.split(" ");
             for (String type: typesOfVariables) {
-                if(type.equals(words[0])) return compileVariable(line, words[0]);
+                if(type.equals(words[0])) return compileVariable(line, words[0], variables.get(index));
             }
 //            if(words[0])
-            return compileVariable(line, words[0]);
+            return compileVariable(line, words[0], variables.get(index));
         } else if (line.charAt(line.length()) == '{') {
 //            return compileMethod();
         } else if (line.charAt(line.length()) == '}') {
