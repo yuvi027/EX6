@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,8 +29,8 @@ public class CodeChecker {
     private static int index;
 
     //saves the scope, and a hashmap with all the scope's variables name and their type
-    private HashMap<Integer, ArrayList<Var>> variables;
-    private HashMap<String, ArrayList<Var>> methods;
+    private HashMap<Integer, HashMap<String, Var>> variables;
+    private HashMap<String, HashMap<String, Var>> methods;
 
 
     private CodeChecker() {
@@ -52,7 +53,7 @@ public class CodeChecker {
     public int checkCode(String fileName) {
         try {
             fileOpener(fileName);
-            variables.put(index, new ArrayList<>());
+            variables.put(index, new HashMap<>());
             for (String line : linesOfFile) {
                 compileLine(line);
             }
@@ -72,12 +73,12 @@ public class CodeChecker {
             for (String type : typesOfVariables) {
                 if (type.equals(words[0])) return compileVariable(line, words[0], variables.get(index));
             }
-//            if (variables.get(index).containsKey(words[0])) {
-//                return checkVarValue();
-//            }
+            if (variables.get(index).containsKey(words[0])) {
+                return checkVarValue();
+            }
             return ILLEGAL;
         } else if (line.charAt(line.length()) == '{') {
-            variables.put(++index, new ArrayList<>());
+            variables.put(++index, new HashMap<>());
             return compileMethod();
         } else if (line.charAt(line.length()) == '}') {
             variables.remove(index--);
@@ -123,7 +124,7 @@ public class CodeChecker {
 
     //int a = 1, b = 7, double = 40;
     //char a = 5+3;
-    private int compileVariable(String variable, String type, ArrayList<Var> variablesMap) {
+    private int compileVariable(String variable, String type, HashMap<String, Var> variablesMap) {
         String[] tokenOfVariable = variable.split(",");
         if (tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)) {
             return ILLEGAL;
