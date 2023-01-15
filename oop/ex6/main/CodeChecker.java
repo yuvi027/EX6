@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,8 +27,9 @@ public class CodeChecker {
     private static Pattern illegalVariableName;
     private static int index;
 
-    //saves the variable name, and it's type for the global variables
-    private HashMap<Integer, HashMap<String, String>> variables;
+    //saves the scope, and a hashmap with all the scope's variables name and their type
+    private HashMap<Integer, ArrayList<Var>> variables;
+    private HashMap<String, ArrayList<Var>> methods;
 
 
     private CodeChecker() {
@@ -52,7 +52,7 @@ public class CodeChecker {
     public int checkCode(String fileName) {
         try {
             fileOpener(fileName);
-            variables.put(index, new HashMap<>());
+            variables.put(index, new ArrayList<>());
             for (String line : linesOfFile) {
                 compileLine(line);
             }
@@ -64,25 +64,34 @@ public class CodeChecker {
             return ILLEGAL;
         }
         return LEGAL;
-        //Matcher m = oneLinerComment.matcher("//This is a comment");
-        //System.out.println(m.matches());
-        //return 0;
     }
 
     private int compileLine(String line) throws Exception {
         if (line.charAt(line.length()) == ';') {
             String[] words = line.split(" ");
-            for (String type: typesOfVariables) {
-                if(type.equals(words[0])) return compileVariable(line, words[0], variables.get(index));
+            for (String type : typesOfVariables) {
+                if (type.equals(words[0])) return compileVariable(line, words[0], variables.get(index));
             }
-//            if(words[0])
-            return compileVariable(line, words[0], variables.get(index));
+//            if (variables.get(index).containsKey(words[0])) {
+//                return checkVarValue();
+//            }
+            return ILLEGAL;
         } else if (line.charAt(line.length()) == '{') {
-//            return compileMethod();
+            variables.put(++index, new ArrayList<>());
+            return compileMethod();
         } else if (line.charAt(line.length()) == '}') {
+            variables.remove(index--);
             return LEGAL;
         }
         return ILLEGAL;
+    }
+
+    private int compileMethod() {
+        return 0;
+    }
+
+    private int checkVarValue() {
+        return LEGAL;
     }
 
     private static int fileOpener(String fileName) throws IOException {
@@ -114,7 +123,7 @@ public class CodeChecker {
 
     //int a = 1, b = 7, double = 40;
     //char a = 5+3;
-    private int compileVariable(String variable, String type, HashMap<String, String> variablesMap) {
+    private int compileVariable(String variable, String type, ArrayList<Var> variablesMap) {
         String[] tokenOfVariable = variable.split(",");
         if (tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)) {
             return ILLEGAL;
