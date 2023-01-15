@@ -71,7 +71,7 @@ public class CodeChecker {
             for (String type: typesOfVariables) {
                 if(type.equals(words[0])) return compileVariable(line, words[0]);
             }
-            if(words[0])
+//            if(words[0])
             return compileVariable(line, words[0]);
         } else if (line.charAt(line.length()) == '{') {
 //            return compileMethod();
