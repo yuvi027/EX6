@@ -29,7 +29,8 @@ public class CodeChecker {
 
     //saves the scope, and a hashmap with all the scope's variables name and their type
     private HashMap<Integer, HashMap<String, Var>> variables;
-    private HashMap<String, HashMap<String, Var>> methods;
+    private HashMap<String, HashMap<String, Var>> methods; //TODO: consider the relation between methods
+    // and variables
 
 
     /**
@@ -42,6 +43,7 @@ public class CodeChecker {
         illegalVariableName = Pattern.compile(ILLEGAL_NAME_REGEX);
         index = 1;
         variables = new HashMap<>();
+        methods = new HashMap<>();
         //intPattern = Pattern.compile();
     }
 
@@ -73,6 +75,7 @@ public class CodeChecker {
             error = e.getMessage();
             return ERROR;
         } catch (Exception e) {
+            //TODO: add different types of exceptions...
             error = e.getMessage();
             return ILLEGAL;
         }
@@ -88,36 +91,43 @@ public class CodeChecker {
      */
     private int compileLine(String line) throws Exception {
         String[] words = line.split(" ");
-        if (line.charAt(line.length()) == ';') {
-            if (words.length == 1 && words.equals("return")) {
+        if (line.charAt(line.length()) == ';') { //Out of bounds
+            if (words.length == 1 && words[0].equals("return") && index > 1) {
+                //Changed to words[0] for readability
+                //Checks return case
                 return LEGAL;
             }
             for (String type : typesOfVariables) {
-                if (type.equals(words[0]))
-                    return compileVariable(line, words[0], variables.get(index), false);
-                else if (words[0].equals("final") && type.equals(words[0]))
+                if (words[0].equals("final") && type.equals(words[0])) {
                     return compileVariable(line, words[0], variables.get(index), true);
+                }
+                else if (type.equals(words[0])) {
+                    return compileVariable(line, words[0], variables.get(index), false);
+                }
             }
             if (variables.get(index).containsKey(words[0])) {
                 return checkVarValue(line);
             }
             return ILLEGAL;
-        } else if (line.charAt(line.length()) == '{') {
-            if (words[0].equals("void")) {
-                if (index > 1) return ILLEGAL;
-                else {
+        }
+        else if (line.charAt(line.length()) == '{') {
+            switch (words[0]) {
+                case "void":
+                    if (index > 1) return ILLEGAL;
+                    else {
+                        variables.put(++index, new HashMap<>());
+                        return compileMethod(line);
+                    }
+                case "if":
                     variables.put(++index, new HashMap<>());
-                    return compileMethod(line);
-                }
-            } else if (words[0].equals("if")) {
-                variables.put(++index, new HashMap<>());
-                return checkIfLegal(line);
-            } else if (words[0].equals("while")) {
-                variables.put(++index, new HashMap<>());
-                return checkWhileLegal(line);
+                    return checkIfLegal(line);
+                case "while":
+                    variables.put(++index, new HashMap<>());
+                    return checkWhileLegal(line);
             }
             return ILLEGAL;
         } else if (line.charAt(line.length()) == '}') {
+            //TODO: check
             if (index == 1) return ILLEGAL;
             variables.remove(index--);
             return LEGAL;
@@ -131,8 +141,9 @@ public class CodeChecker {
      * @param line the line of code we are checking
      * @return 0 if the while loop is legal, 1 if not, and 2 in case of errors
      */
-    private int checkWhileLegal(String line) {
 
+    private int checkWhileLegal(String line) {
+        //Agam's function
         return LEGAL;
     }
 
@@ -153,22 +164,34 @@ public class CodeChecker {
      * @param line the line of code we are checking
      * @return 0 if the function is legal, 1 if not, and 2 in case of errors
      */
+
+    //When we check if a function is legal, we must check some things, one of them is to add only the LOCAL
+    // variables to the dictionary, we also know that they have a value that legal.
     private int compileMethod(String line) {
+        //TODO- check function...
+
         //TODO- check regex for proper function definition
         //TODO- also check where we call functions in the code
         // Split the code into void function name, and params
         String[] parts = line.split("[()]");
         // Check it really does start with void, and there are only 2 words in the function declaration
         String[] words = parts[0].split(" ");
-        if (words.length > 2 || !words[0].equals("void")) return ILLEGAL;
-        //Save the name
+        if (words.length > 2 || !words[0].equals("void")) return ILLEGAL; //TODO check if name legal
+        //Save the function name
         String name = words[1];
+
         //Start to work on the params
+        //Is the params is a variables of the function? It should be on=ly for local variables, the params
+        // of the function are initialized by this part...
         words = parts[1].split(",");
         HashMap<String, Var> temp = new HashMap<>();
         //Go through the params and see if they are legal, if so add them to temp
         for (String word : words) {
             //first check if the param is final, then check for validity
+
+            //This part is in compileVariable...
+
+            //Need to be in a helper function because relevant for global variables as well (lines 193-209)
             parts = word.split(" ");
             if (parts.length == 3) {
                 if (!parts[0].equals("final")) return ILLEGAL;
@@ -198,7 +221,8 @@ public class CodeChecker {
      * @param line the line of initialization of the variable
      * @return 0 if the initialization is legal, 1 if not, and 2 in case of errors
      */
-    //TODO- maybe we should move some of the code from the compile here, because we'll need it a lot
+    //TODO- maybe we should move some of the code from the compile here, because we'll need it a lot...
+    //This will be a subroutine of compileVariable...
     private int checkVarValue(String line) {
         String[] words = line.split(" "); //TODO- make into regex, so we can also check for (example) num=5
         String type = variables.get(index).get(words[0]).getType();
@@ -229,7 +253,7 @@ public class CodeChecker {
                 linesOfFile.add(s);
             }
             System.out.println(linesOfFile.toString());
-        } catch (IOException e) {
+        } catch (IOException e) {//TODO: add more types of exceptions
             throw e;
         }
         return LEGAL;
@@ -261,7 +285,7 @@ public class CodeChecker {
             //TODO: finish
             for (String token : tokenOfVariable) {
                 if (variablesMap.containsKey(token)) {
-                    if (!variablesMap.get(token).equals(type))
+                    if (!variablesMap.get(token).getType().equals(type))
                         return ILLEGAL;
                     else {
                         //Check if valid
