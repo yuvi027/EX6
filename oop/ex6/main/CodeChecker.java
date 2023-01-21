@@ -24,8 +24,8 @@ public class CodeChecker {
     private static final String ILLEGAL_NAME_REGEX = "_|[0-9].*";
 //    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
 //    private static final String INT_REGEX = "^((?:(?:.*?)\\s*(?:=\\s*(\\d+)))?,?)+?;$";
-    private static final String INT_REGEX = "(?:\\+|\\-|)\\d+";
-    private static final String DOUBLE_REGEX = "(?:\\+|\\-|)((\\d+.\\d*)|(\\d*.\\d+))" + "|" + INT_REGEX;
+    private static final String INT_REGEX = "(?:\\+|-|)\\d+";
+    private static final String DOUBLE_REGEX = "(?:\\+|-|)((\\d+.\\d*)|(\\d*.\\d+))" + "|" + INT_REGEX;
     private static final String STRING_REGEX = "\"[^\"]*\"";
     private static final String BOOLEAN_REGEX = "true|false|" + INT_REGEX + "|" + DOUBLE_REGEX;
     private static final String CHAR_REGEX = "'.'";
@@ -120,6 +120,10 @@ public class CodeChecker {
      * @throws Exception
      */
     private int compileLine(String line) throws Exception {
+        if(line.contains("/*") || line.contains("/**") || line.contains("//") || line.contains("*/")){
+            return ILLEGAL;
+        } //TODO: check this If expression, should handle comments...
+
         String[] words = line.split(" ");
         if (line.charAt(line.length()) == ';') { //Out of bounds
             if (words.length == 1 && words[0].equals("return") && index > 1) {
@@ -220,7 +224,8 @@ public class CodeChecker {
         }
         Var expVar = checkVariableExist(exp);
         if(expVar!=null && expVar.Initiated()){
-            return expVar.getType().equals(BOOLEAN) || expVar.getType().equals(INT) || expVar.getType().equals(DOUBLE);
+            return expVar.getType().equals(BOOLEAN) || expVar.getType().equals(INT) ||
+                    expVar.getType().equals(DOUBLE);
         }
         return false;
     }
