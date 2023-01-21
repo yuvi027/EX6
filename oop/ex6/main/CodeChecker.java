@@ -1,5 +1,6 @@
 package oop.ex6.main;
 
+import javax.print.attribute.standard.MediaSize;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -9,6 +10,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CodeChecker {
+    private static final String INT = "int";
+    private static final String DOUBLE = "double";
+    private static final String STRING = "String";
+    private static final String BOOLEAN = "boolean";
+    private static final String CHAR = "char";
     private static final int LEGAL = 0;
     private static final int ILLEGAL = 1;
     private static final int ERROR = 2;
@@ -16,8 +22,16 @@ public class CodeChecker {
     private static final String BLANK_LINE_REGEX = "\\s*";
     private static final String[] typesOfVariables = {"int", "double", "String", "boolean", "char"};
     private static final String ILLEGAL_NAME_REGEX = "_|[0-9].*";
-    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
-    private static final String INT_REGEX = "^((?:(?:.*?)\\s*(?:=\\s*(\\d+)))?,?)+?;$";
+//    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
+//    private static final String INT_REGEX = "^((?:(?:.*?)\\s*(?:=\\s*(\\d+)))?,?)+?;$";
+    private static final String INT_REGEX = "(?:\\+|\\-|)\\d+";
+    private static final String DOUBLE_REGEX = "(?:\\+|\\-|)((\\d+.\\d*)|(\\d*.\\d+))" + "|" + INT_REGEX;
+    private static final String STRING_REGEX = "\"[^\"]*\"";
+    private static final String BOOLEAN_REGEX = "true|false|" + INT_REGEX + "|" + DOUBLE_REGEX;
+    private static final String CHAR_REGEX = "'.'";
+    private static final int NAME = 0;
+    private static final int MAX_PARTS = 2;
+    private static final int VAL_TO_PUT = 1;
 
     private static String error;
     private static ArrayList<String> linesOfFile;
@@ -25,6 +39,12 @@ public class CodeChecker {
     private static Pattern oneLinerComment;
     private static Pattern emptyLinePattern;
     private static Pattern illegalVariableName;
+    private static Pattern intPattern;
+    private static Pattern doublePattern;
+    private static Pattern stringPattern;
+    private static Pattern charPattern;
+    private static Pattern booleanPattern;
+
     private static int index;
     private static boolean returned;
 
@@ -43,6 +63,13 @@ public class CodeChecker {
         oneLinerComment = Pattern.compile(COMMENT_REGEX);
         emptyLinePattern = Pattern.compile(BLANK_LINE_REGEX);
         illegalVariableName = Pattern.compile(ILLEGAL_NAME_REGEX);
+        intPattern = Pattern.compile(INT_REGEX);
+        doublePattern = Pattern.compile(DOUBLE_REGEX);
+        stringPattern = Pattern.compile(STRING_REGEX);
+        booleanPattern = Pattern.compile(BOOLEAN_REGEX);
+        charPattern = Pattern.compile(CHAR_REGEX);
+        System.out.println(DOUBLE_REGEX);
+        System.out.println(BOOLEAN_REGEX);
         index = 1;
         variables = new HashMap<>();
         methods = new HashMap<>();
@@ -104,9 +131,9 @@ public class CodeChecker {
             if (returned) return ILLEGAL;
             for (String type : typesOfVariables) {
                 if (words[0].equals("final") && type.equals(words[0])) {
-                    return compileVariable(line, words[0], variables.get(index), true);
+//                    return compileVariable(line, words[0], variables.get(index), true);
                 } else if (type.equals(words[0])) {
-                    return compileVariable(line, words[0], variables.get(index), false);
+//                    return compileVariable(line, words[0], variables.get(index), false);
                 }
             }
             int num = index;
@@ -168,6 +195,36 @@ public class CodeChecker {
         return LEGAL;
     }
 
+
+    private boolean checkIfWhileExpression(String line) throws IllegalExpressionException {
+        String exp = line.substring(line.indexOf('('), line.indexOf(')'));
+        String[] miniExpressions = exp.split("(&&|(?:||))*");
+        for(int i=0; i<miniExpressions.length;i++){
+            miniExpressions[i] = miniExpressions[i].strip();
+        }
+        for(String miniExpression : miniExpressions){
+            if(!checkIsLegal(miniExpression)){
+                throw new IllegalExpressionException();
+            }
+        }
+        return true;
+    }
+
+    private boolean checkIsLegal(String exp){
+        if(exp.equals("")){
+            return false;
+        }
+        Matcher booleanExp = booleanPattern.matcher(exp);
+        if(booleanExp.matches()){
+            return true;
+        }
+        Var expVar = checkVariableExist(exp);
+        if(expVar!=null && expVar.Initiated()){
+            return expVar.getType().equals(BOOLEAN) || expVar.getType().equals(INT) || expVar.getType().equals(DOUBLE);
+        }
+        return false;
+    }
+
     /**
      * Checks if the while loop is legal
      *
@@ -175,9 +232,8 @@ public class CodeChecker {
      * @return 0 if the while loop is legal, 1 if not, and 2 in case of errors
      */
 
-    private int checkWhileLegal(String line) {
-        //Agam's function
-        return LEGAL;
+    private boolean checkWhileLegal(String line) throws IllegalExpressionException {
+        return checkIfWhileExpression(line);
     }
 
     /**
@@ -292,6 +348,7 @@ public class CodeChecker {
         return LEGAL;
     }
 
+
     /**
      * @return the error message we want to print
      */
@@ -310,54 +367,162 @@ public class CodeChecker {
      * @param finalVal     whether the variable is final or not
      * @return 0 if the variable is legal, 1 if not, and 2 in case of errors
      */
-    private int compileVariable(String variable, String type, HashMap<String, Var> variablesMap, boolean finalVal) {
-        String[] tokenOfVariable = variable.split(",");
-        if (tokenOfVariable[1].matches(ILLEGAL_NAME_REGEX)) {
-            return ILLEGAL;
-        } else {
-            //TODO: finish
-            for (String token : tokenOfVariable) {
-                if (variablesMap.containsKey(token)) {
-                    if (!variablesMap.get(token).getType().equals(type))
-                        return ILLEGAL;
-                    else {
-                        //Check if valid
-                    }
-                } else {
-                    //if valid then
-                    Pattern ifInitialization = Pattern.compile("=");
-                    Matcher initializationMatcher = ifInitialization.matcher(token);
-                    if (initializationMatcher.find()) {
-                        //TODO- maybe we should take this as an outer function because checkVarLegal also use this code
-                        //that's a function used to check if a re-initialization of aa variable is legal
-                        switch (type) {
-                            case "int":
-                                //Check if int is legal
-                                if (!token.matches(INT_REGEX)) {
-                                    return ILLEGAL;
-                                }
-                                break;
-                            case "double":
-                                //check if double is legal
-                                break;
-                            case "String":
-                                //check if String is legal
-                                break;
-                            case "boolean":
-                                //check if boolean is legal
-                                break;
-                            case "char":
-                                //check if boolean is legal
-                                break;
-                        }
-                    }
 
-//                    variablesMap.put(token, type);
-                    //else return INVALID
+    //FIXME It should be private, only public for testing
+    public void compileVariableDecleration(String variable, String type, HashMap<String, Var> variablesMap,
+                                  boolean finalVal) throws IllegalNameException, IllegalVariableException, NotFoundExceprion {
+        if(variable.equals("")){
+            throw new NotFoundExceprion();
+        }
+        String[] variablesList = variable.split((","));
+        //check definitions of variable
+        for(String token: variablesList){
+            if(token.contains("=")){
+                String[] token_parts = token.split("=");
+                if(token_parts.length > MAX_PARTS){
+                    throw new IllegalVariableException();
                 }
-
+                for(int i=0; i< token_parts.length; i++){
+                    token_parts[i] = token_parts[i].strip();
+                }
+                if(checkVariableName(token_parts[NAME]) && !variablesMap.containsKey(token_parts[NAME])){
+                    //&& !checkVariableExistsInScope(token_parts[NAME])
+                    //If we got here, we know that we add a new variable, so - we must check its value
+                    if(checkVal(token_parts[VAL_TO_PUT], type)){
+                        Var varToAdd = new Var(token_parts[NAME], type, true, finalVal);
+                        variablesMap.put(token_parts[NAME], varToAdd);
+                        System.out.println("compiled!");
+                    }
+                    else{
+                        throw new IllegalVariableException();
+                    }
+                }
+                else {
+                    throw new IllegalNameException();
+                }
+            }
+            else{
+                if(checkVariableName(token.strip()) && !variablesMap.containsKey(token.strip())){
+                    //Add to dict
+                    Var varToAdd = new Var(token.strip(), type);
+                    variablesMap.put(token.strip(), varToAdd);
+                    System.out.println("Compiled!");
+                }
+                else{
+                    throw new IllegalNameException();
+                }
             }
         }
-        return ILLEGAL;
+    }
+
+    private void compileSetVariable(String variableList) throws IllegalVariableException, NotFoundExceprion,
+            IllegalAssigmentException {
+        String[] variables = variableList.split(",");
+        for(var variable: variables) {
+            if (variable.contains("=")) {
+                String[] token_parts = variable.split("=");
+                if (token_parts.length > MAX_PARTS) {
+                    throw new IllegalVariableException();
+                }
+                Var variableToCheck = checkVariableExist(token_parts[NAME]);
+                if (variableToCheck == null) {
+                    throw new NotFoundExceprion();
+                }
+                if (variableToCheck.isFinal()) {
+                    throw new IllegalAssigmentException();
+                }
+                if (variableToCheck.getType().equals(DOUBLE)) {
+                    if (!checkVal(token_parts[VAL_TO_PUT], variableToCheck.getType()) ||
+                            !checkVal(token_parts[VAL_TO_PUT], INT)) {
+                        throw new IllegalVariableException();
+                    }
+                } else if (variableToCheck.getType().equals(BOOLEAN)) {
+                    if (!checkVal(token_parts[VAL_TO_PUT], variableToCheck.getType()) ||
+                            !checkVal(token_parts[VAL_TO_PUT], INT) ||
+                            !checkVal(token_parts[VAL_TO_PUT], DOUBLE)) {
+                        throw new IllegalVariableException();
+                    }
+
+                } else {
+                    if (!checkVal(token_parts[VAL_TO_PUT], variableToCheck.getType())) {
+                        throw new IllegalVariableException();
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkVal(String value, String type) {
+        switch (type) {
+            case INT:
+                Matcher intType = intPattern.matcher(value);
+                if (intType.matches()) {
+                    return true;
+                }
+                break;
+            case DOUBLE:
+                Matcher doubleType = doublePattern.matcher(value);
+                if (doubleType.matches()) {
+                    return true;
+                }
+                break;
+            case STRING:
+                Matcher stringType = stringPattern.matcher(value);
+                if (stringType.matches()) {
+                    return true;
+                }
+                break;
+            case BOOLEAN:
+                Matcher booleanType = booleanPattern.matcher(value);
+                if (booleanType.matches()) {
+                    return true;
+                }
+                break;
+            case CHAR:
+                Matcher charType = charPattern.matcher(value);
+                if (charType.matches()) {
+                    return true;
+                }
+                break;
+        }
+        //If we got here, we might assign a value of other variable
+        Var valToAssign = checkVariableExist(value);
+        if(valToAssign != null && valToAssign.getType().equals(type) && valToAssign.Initiated()){
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * Checks if variable name is valid
+     */
+    private boolean checkVariableName(String name) throws IllegalNameException {
+        Matcher illegalName = illegalVariableName.matcher(name);
+        if(illegalName.matches()){
+            throw new IllegalNameException();
+        }
+        return true;
+    }
+
+    /**
+     * Checks if the variable already exists in one of the hashMaps
+     * @param name - the name of the variable
+     * @return true if exists such variable in any scope...
+     */
+    private Var checkVariableExist(String name){
+        for(int i=index; i>=0; i--){
+            if(variables.get(i).containsKey(name)){
+                return variables.get(i).get(name);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Used for definition of new variables in some scope, to be sure that there is no one in the same name
+     */
+    private Var checkVariableExistsInScope(String name){
+        return variables.get(index).get(name);
     }
 }

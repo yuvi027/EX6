@@ -12,10 +12,10 @@ public class Var {
         this.value = value;
         this.finalValue = finalValue;
     }
-    public Var(String name, String type, boolean finalValue){
+    public Var(String name, String type){
         this.name = name;
         this.type = type;
-        this.finalValue = finalValue;
+        this.finalValue = false;
         this.value = false;
     }
     public String getName(){return this.name;}

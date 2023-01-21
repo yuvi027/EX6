@@ -3,6 +3,7 @@ package oop.ex6.main;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +18,8 @@ public class Sjavac {
         CodeChecker  checker = CodeChecker.getInstance();
         //int num = checker.checkCode(args[FILE_NAME_IND]);
         Pattern fileEndingPattern = Pattern.compile("\\.sjava$");
-        Matcher fileHasCorrectEnding = fileEndingPattern.matcher(args[FILE_NAME_IND]);
+        //Matcher fileHasCorrectEnding = fileEndingPattern.matcher(args[FILE_NAME_IND]);
+        /*
         int num = checker.checkCode("oop/ex6/main/test2.txt");
         if(args.length != NUM_OF_ARGS){
             System.err.println("Wrong parameters number!");
@@ -34,6 +36,17 @@ public class Sjavac {
         else{
             System.out.println(num);
         }
-
+        */
+        HashMap<String, Var> h = new HashMap<>();
+        HashMap<Integer, HashMap<String, Var>> j = new HashMap<>();
+        j.put(0, h);
+        //h.put("c", new Var("c", "boolean"));
+        try{
+            String a = "hello";
+            String b = "World";
+            checker.compileVariableDecleration("c=5-3", "int", h, false);
+        } catch (FileException e) {
+            System.out.println("Failed!!");
+        }
     }
 }
