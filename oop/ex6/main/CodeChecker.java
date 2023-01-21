@@ -22,6 +22,7 @@ public class CodeChecker {
     private static final String BLANK_LINE_REGEX = "\\s*";
     private static final String[] typesOfVariables = {"int", "double", "String", "boolean", "char"};
     private static final String ILLEGAL_NAME_REGEX = "_|[0-9].*";
+
 //    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
 //    private static final String INT_REGEX = "^((?:(?:.*?)\\s*(?:=\\s*(\\d+)))?,?)+?;$";
     private static final String INT_REGEX = "(?:\\+|-|)\\d+";
@@ -375,7 +376,7 @@ public class CodeChecker {
 
     //FIXME It should be private, only public for testing
     public void compileVariableDecleration(String variable, String type, HashMap<String, Var> variablesMap,
-                                  boolean finalVal) throws IllegalNameException, IllegalVariableException, NotFoundExceprion {
+                                  boolean finalVal) throws IllegalNameException, IllegalVariableException, NotFoundExceprion, IllegalExpressionException {
         if(variable.equals("")){
             throw new NotFoundExceprion();
         }
@@ -502,12 +503,17 @@ public class CodeChecker {
     /**
      * Checks if variable name is valid
      */
-    private boolean checkVariableName(String name) throws IllegalNameException {
+    private boolean checkVariableName(String name) throws IllegalNameException, IllegalExpressionException {
         Matcher illegalName = illegalVariableName.matcher(name);
-        if(illegalName.matches()){
-            throw new IllegalNameException();
+        Pattern legalNameChars = Pattern.compile("[0-9A-Za-z_]*");
+        Matcher namePattern = legalNameChars.matcher(name);
+        if(namePattern.matches()) {
+            if (illegalName.matches()) {
+                throw new IllegalNameException();
+            }
+            return true;
         }
-        return true;
+        throw new IllegalExpressionException();
     }
 
     /**
