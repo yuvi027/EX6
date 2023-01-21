@@ -23,4 +23,6 @@ public class Var {
     public String getType(){return this.type;}
 
     public boolean Initiated(){return this.value;}
+
+    public boolean isFinal(){return this.finalValue;}
 }

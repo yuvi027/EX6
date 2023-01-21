@@ -30,7 +30,8 @@ public class CodeChecker {
 
     //saves the scope, and a hashmap with all the scope's variables name and their type
     private HashMap<Integer, HashMap<String, Var>> variables;
-    private HashMap<String, HashMap<String, Var>> methods; //TODO: consider the relation between methods
+    //TODO- FIX methods !!!!!!!!!!!!!!!!!!
+    private HashMap<String, HashMap<String, ArrayList<Var>>> methods; //TODO: consider the relation between methods
     // and variables
 
 
@@ -110,17 +111,17 @@ public class CodeChecker {
             }
             int num = index;
             while (num > 0) {
-                if (variables.get(index).containsKey(words[0])) {
+                if (variables.get(num).containsKey(words[0])) {
                     return checkVarValue(line);
                 }
                 num--;
             }
             num = index;
             while (num > 0) {
-                if (methods.get(index).containsKey(words[0])){
-                    return checkFuncCall(line);
+                if (methods.get(num).containsKey(words[0])) {
+                    return checkFuncCall(line, methods.get(num).get(words[0]));
                 }
-                 num--;
+                num--;
             }
             return ILLEGAL;
         } else if (line.charAt(line.length()) == '{') {
@@ -148,8 +149,22 @@ public class CodeChecker {
         }
         return ILLEGAL;
     }
-
-    private int checkFuncCall(String line) {
+//Check this function
+    private int checkFuncCall(String line, ArrayList<Var> vars) {
+        String[] words = line.split("()"); //TODO- check if there's better ways to split
+        String[] params = words[1].split(",");
+        if(params.length != vars.size()) return ILLEGAL; //Illegal number of arguments
+        int num = index;
+        while (num > 0) {
+            for (String name : params) {
+                if(!(name.split(" ")[0].equals("final") && variables.get(num).get(name).Initiated() && variables.get(num).get(name).isFinal())){
+                    return ILLEGAL;
+                }
+                if (!(variables.get(num).containsKey(name) && variables.get(num).get(name).Initiated())){
+                    return ILLEGAL;
+                }
+            }
+        }
         return LEGAL;
     }
 
@@ -229,7 +244,7 @@ public class CodeChecker {
                 }
             } else return ILLEGAL;
         }
-        methods.put(name, temp);
+//        methods.put(name, temp);
         return LEGAL;
     }
 
