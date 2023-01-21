@@ -26,6 +26,7 @@ public class CodeChecker {
     private static Pattern emptyLinePattern;
     private static Pattern illegalVariableName;
     private static int index;
+    private static boolean returned;
 
     //saves the scope, and a hashmap with all the scope's variables name and their type
     private HashMap<Integer, HashMap<String, Var>> variables;
@@ -44,6 +45,7 @@ public class CodeChecker {
         index = 1;
         variables = new HashMap<>();
         methods = new HashMap<>();
+        returned = false;
         //intPattern = Pattern.compile();
     }
 
@@ -95,22 +97,33 @@ public class CodeChecker {
             if (words.length == 1 && words[0].equals("return") && index > 1) {
                 //Changed to words[0] for readability
                 //Checks return case
+                returned = true;
                 return LEGAL;
             }
+            if (returned) return ILLEGAL;
             for (String type : typesOfVariables) {
                 if (words[0].equals("final") && type.equals(words[0])) {
                     return compileVariable(line, words[0], variables.get(index), true);
-                }
-                else if (type.equals(words[0])) {
+                } else if (type.equals(words[0])) {
                     return compileVariable(line, words[0], variables.get(index), false);
                 }
             }
-            if (variables.get(index).containsKey(words[0])) {
-                return checkVarValue(line);
+            int num = index;
+            while (num > 0) {
+                if (variables.get(index).containsKey(words[0])) {
+                    return checkVarValue(line);
+                }
+                num--;
+            }
+            num = index;
+            while (num > 0) {
+                if (methods.get(index).containsKey(words[0])){
+                    return checkFuncCall(line);
+                }
+                 num--;
             }
             return ILLEGAL;
-        }
-        else if (line.charAt(line.length()) == '{') {
+        } else if (line.charAt(line.length()) == '{') {
             switch (words[0]) {
                 case "void":
                     if (index > 1) return ILLEGAL;
@@ -130,9 +143,14 @@ public class CodeChecker {
             //TODO: check
             if (index == 1) return ILLEGAL;
             variables.remove(index--);
+            returned = false;
             return LEGAL;
         }
         return ILLEGAL;
+    }
+
+    private int checkFuncCall(String line) {
+        return LEGAL;
     }
 
     /**
