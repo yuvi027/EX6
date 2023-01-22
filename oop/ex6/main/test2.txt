@@ -1,6 +1,12 @@
-Hello world,
 
 //This is a comment
-How are you today?
 
 //Another comment
+
+void foo(int a){
+return;
+}
+void fun(int b){
+foo(a);
+}
+final int a = 2;

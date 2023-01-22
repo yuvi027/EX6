@@ -1,6 +1,6 @@
 package oop.ex6.main;
 
-public class NotFoundExceprion extends FileException {
+public class NotFoundException extends FileException {
     private final String NOT_FOUND = "Name does not found";
     /**
      * Returns the detail message string of this throwable.
