@@ -1,0 +1,2 @@
+/** A multi-line comment should not be supported */
+int a = 6 /*this neither */;
