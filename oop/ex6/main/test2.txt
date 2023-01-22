@@ -1,12 +1,1 @@
-
-//This is a comment
-
-//Another comment
-
-void foo(int a){
-return;
-}
-void fun(int b){
-foo(a);
-}
-final int a = 2;
+int a = 0;

@@ -17,14 +17,14 @@ public class CodeChecker {
     private static final int LEGAL = 0;
     private static final int ILLEGAL = 1;
     private static final int ERROR = 2;
-    private static final String COMMENT_REGEX = "^\\/\\/.*";
+    private static final String COMMENT_REGEX = "^//.*";
     private static final String BLANK_LINE_REGEX = "\\s*";
     private static final String[] typesOfVariables = {"int", "double", "String", "boolean", "char"};
     private static final String ILLEGAL_NAME_REGEX = "_|[0-9].*";
 
     //    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
 //    private static final String INT_REGEX = "^((?:(?:.*?)\\s*(?:=\\s*(\\d+)))?,?)+?;$";
-    private static final String INT_REGEX = "(?:\\+|-|)\\d+";
+    private static final String INT_REGEX = "(?:\\+|-|)[0-9]+";
     private static final String DOUBLE_REGEX = "(?:\\+|-|)((\\d+.\\d*)|(\\d*.\\d+))" + "|" + INT_REGEX;
     private static final String STRING_REGEX = "\"[^\"]*\"";
     private static final String BOOLEAN_REGEX = "true|false|" + INT_REGEX + "|" + DOUBLE_REGEX;
@@ -126,10 +126,10 @@ public class CodeChecker {
             if (line.charAt(line.length() - 1) == ';') { //Out of bounds
                 for (String type : typesOfVariables) {
                     if (words[0].equals("final") && type.equals(words[1])) {
-                        return compileVariableDecleration(line.substring(words[0].length() + 1 + words[1].length() + 1, line.length() - 1), words[1], variables.get(1), true);
+                        if(compileVariableDecleration(line.substring(words[0].length() + 1 + words[1].length() + 1, line.length() - 1), words[1], variables.get(1), true) == ILLEGAL) return ILLEGAL;
                         //
                     } else if (type.equals(words[0])) {
-                        return compileVariableDecleration(line.substring(words[0].length() + 1, line.length() - 1), words[0], variables.get(1), false);
+                        if(compileVariableDecleration(line.substring(words[0].length() + 1, line.length() - 1), words[0], variables.get(1), false) == ILLEGAL) return ILLEGAL;
                     }
                 }
             }
@@ -235,8 +235,8 @@ public class CodeChecker {
                 return ILLEGAL;
             }
             if (!vars.get(i).getType().equals(curVar.getType())) {
-                System.out.println(vars.get(i).getType());
-                System.out.println(curVar.getType());
+//                System.out.println(vars.get(i).getType());
+//                System.out.println(curVar.getType());
                 error = "Illegal variables";
                 return ILLEGAL;
             }
@@ -396,7 +396,7 @@ public class CodeChecker {
                 linesOfFile.add(s);
             }
             //TODO- delete when submitting
-            System.out.println(linesOfFile.toString());
+//            System.out.println(linesOfFile.toString());
         } catch (IOException e) {//TODO: add more types of exceptions
             throw e;
         }
@@ -446,20 +446,30 @@ public class CodeChecker {
                     //If we got here, we know that we add a new variable, so - we must check its value
                     if (checkVal(token_parts[VAL_TO_PUT], type)) {
                         Var varToAdd = new Var(token_parts[NAME], type, true, finalVal);
+                        if(variablesMap.containsKey(varToAdd.getName())) {
+                            error = "Multiple definition of a variable";
+                            return ILLEGAL;
+                        }
                         variablesMap.put(varToAdd.getName(), varToAdd);
-                        System.out.println("compiled!"); //Todo- delete when submitting
-                    } else {
+//                        System.out.println("compiled!"); //Todo- delete when submitting
+                    }
+                    else {
                         throw new IllegalVariableException();
                     }
-                } else {
+                }
+                else {
                     throw new IllegalNameException();
                 }
             } else {
                 if (checkVariableName(token.strip()) && !variablesMap.containsKey(token.strip())) {
                     //Add to dict
                     Var varToAdd = new Var(token.strip(), type);
+                    if(variablesMap.containsKey(varToAdd.getName())) {
+                        error = "Multiple definition of a variable";
+                        return ILLEGAL;
+                    }
                     variablesMap.put(varToAdd.getName(), varToAdd);
-                    System.out.println("Compiled!");
+//                    System.out.println("Compiled!");
                 } else {
                     throw new IllegalNameException();
                 }
