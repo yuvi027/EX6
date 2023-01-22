@@ -461,7 +461,7 @@ public class CodeChecker {
                     throw new IllegalNameException();
                 }
             } else {
-                if (checkVariableName(token.strip()) && !variablesMap.containsKey(token.strip())) {
+                if (checkVariableName(token.strip()) && !variablesMap.containsKey(token.strip()) && !finalVal) {
                     //Add to dict
                     Var varToAdd = new Var(token.strip(), type);
                     if(variablesMap.containsKey(varToAdd.getName())) {
