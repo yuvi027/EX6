@@ -1,0 +1,8 @@
+void f1(String a, double b) {
+		return;
+}
+
+void f2() {
+f1("Hello WORLD", 6.7);
+return;
+}
