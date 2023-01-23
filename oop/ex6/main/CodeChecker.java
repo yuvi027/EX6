@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,7 @@ public class CodeChecker {
     private static Pattern stringPattern;
     private static Pattern charPattern;
     private static Pattern booleanPattern;
+    private static Pattern legalNameChars;
 
     private static int index;
     private static boolean returned;
@@ -68,6 +70,7 @@ public class CodeChecker {
         stringPattern = Pattern.compile(STRING_REGEX);
         booleanPattern = Pattern.compile(BOOLEAN_REGEX);
         charPattern = Pattern.compile(CHAR_REGEX);
+        legalNameChars = Pattern.compile("[0-9A-Za-z_]*");
         index = 1;
         variables = new HashMap<>();
         methods = new HashMap<>();
@@ -108,7 +111,6 @@ public class CodeChecker {
             error = e.getMessage();
             return ERROR;
         } catch (FileException e) {
-            //TODO: add different types of exceptions...
             error = e.getMessage();
             return ILLEGAL;
         }
@@ -148,11 +150,14 @@ public class CodeChecker {
         if (line.contains("/*") || line.contains("/**") || line.contains("//") || line.contains("*/")) {
             error = "Illegal comment";
             return ILLEGAL;
-        } //TODO: check this If expression, should handle comments...
+        }
 
+
+        line = line.replaceAll("[ ]{2,}", " ");
         String[] words = line.split(" ");
-        if (line.charAt(line.length() - 1) == ';') { //Out of bounds
-            if (words.length == 1 && words[0].equals("return;") && index > 1) {
+//        System.out.println("Compiling! - " + line + " words " + words.length);
+        if (line.charAt(line.length() - 1) == ';') {
+             if (words.length == 1 && words[0].equals("return;") && index > 1) {
                 //Changed to words[0] for readability
                 //Checks return case
                 returned = true;
@@ -195,13 +200,16 @@ public class CodeChecker {
                         error = "Illegal location of definition of function";
                         return ILLEGAL;
                     } else {
+
+                        // TODO ----- need to move this part to first run (tests 427 and 452), order of
+                        //  declaration of the function after the call to the function
                         variables.put(++index, new HashMap<>());
                         return compileMethod(line.substring(5));
                     }
                 case "if":
                 case "while":
-                    variables.put(index++, new HashMap<>());
-                    return checkIfWhileExpression(line);
+                    variables.put(++index, new HashMap<>());
+                    return checkIfWhileExpression(line.substring(words[0].length()+1,line.length()-1));
             }
             error = "Illegal line";
             return ILLEGAL;
@@ -220,29 +228,78 @@ public class CodeChecker {
         return ILLEGAL;
     }
 
-    //Check this function
+    //Check if a function call is valid
     private int checkFuncCall(String line, ArrayList<Var> vars) {
         String[] words = line.split("[()]"); //TODO- check if there's better ways to split
-        String[] params = words[1].split(",");
+        String[] params;
+        if(words[1].length() == 0){
+          params = new String[]{};
+        }
+        else {
+            params = words[1].split(",");
+        }
         if (params.length != vars.size()) {
-            error = "Illegal number if variables";
+            error = "Illegal number of variables";
             return ILLEGAL; //Illegal number of arguments
         }
+
         for (int i = 0; i < vars.size(); i++) {
+            params[i]=params[i].strip();
+ //           System.out.println("Checking variable: " + vars.get(i) + " ---- " + params[i]);
+
+            // Check if we got a variable name
             Var curVar = checkVariableExist(params[i]);
             if (curVar == null) {
+                // if not a variable name, check if we got the expected type of variable
                 error = "Illegal variables";
-                return ILLEGAL;
+                switch(vars.get(i).getType()){
+                    case "int":
+                        Matcher intType = intPattern.matcher(params[i]);
+                        if(!intType.matches()){
+                            return ILLEGAL;
+                        }
+                        break;
+                    case "double":
+                        //Matcher intTDouble =intPattern.matcher(params[i]);
+                        Matcher doubleMatcher  = doublePattern.matcher(params[i]);
+                        if(!doubleMatcher.matches()){ //intTDouble.matches() ||
+                            return ILLEGAL;
+                        }
+                        break;
+                    case "String":
+                        Matcher stringMatcher = stringPattern.matcher(params[i]);
+                        if(!stringMatcher.matches()){
+                            return ILLEGAL;
+                        }
+                        break;
+                    case "boolean":
+                        Matcher boolMatcher = booleanPattern.matcher(params[i]);
+                        //Matcher intToType = intPattern.matcher(params[i]);
+                        //Matcher doubleType = doublePattern.matcher(params[i]);
+                        if(!boolMatcher.matches() ){ //|| intToType.matches() || doubleType.matches()
+                            return ILLEGAL;
+                        }
+                        break;
+                    case "char":
+                        Matcher charMatcher = charPattern.matcher(params[i]);
+                        if(!charMatcher.matches()){
+                            return ILLEGAL;
+                        }
+                        break;
+                }
             }
-            if (!vars.get(i).getType().equals(curVar.getType())) {
-//                System.out.println(vars.get(i).getType());
-//                System.out.println(curVar.getType());
-                error = "Illegal variables";
-                return ILLEGAL;
-            }
-            if (!curVar.Initiated()) {
-                error = "Illegal variables";
-                return ILLEGAL;
+            else {
+                // Check if variable type is right
+                if (!vars.get(i).getType().equals(curVar.getType())) {
+                    error = "Illegal variable/s type";
+                    return ILLEGAL;
+                }
+
+                // Check if variable is initialized
+                if (!curVar.Initiated()) {
+                    error = "Variable not initialized";
+                    return ILLEGAL;
+                }
             }
 //            if (curVar.isFinal() && !vars.get(i).isFinal()) {
 //                error = "Illegal variables";
@@ -266,9 +323,21 @@ public class CodeChecker {
     }
 
 
+    /**
+     * A function that ressponsble to check the expression inside the if/while start of bllock.
+     * for example if(...) or while(...)
+     * @param line - the variables in format (a&&b||  c)
+     * @return LEGAL if valid, else ILLEGAL
+     * @throws IllegalExpressionException = If the expression is illegal
+     */
+
     private int checkIfWhileExpression(String line) throws IllegalExpressionException {
-        String exp = line.substring(line.indexOf('('), line.indexOf(')'));
-        String[] miniExpressions = exp.split("(&&|(?:||))*");
+        //String exp = line.substring(line.indexOf('('), line.indexOf(')'));
+        String exp = line.replaceFirst("[ ]*\\(","").replaceFirst("\\)[ ]*","");
+        exp = exp.replaceAll(" ","");
+        exp = exp.replaceAll("&&"," ");
+        exp = exp.replaceAll("\\x7c\\x7c"," ");
+        String[] miniExpressions = exp.split(" ");
         for (int i = 0; i < miniExpressions.length; i++) {
             miniExpressions[i] = miniExpressions[i].strip();
         }
@@ -280,6 +349,12 @@ public class CodeChecker {
         return LEGAL;
     }
 
+
+    /**
+     * Checks if the boolean Expression is valid
+     * @param exp = the expression to check
+     * @return true if legal, false else
+     */
     private boolean checkIsLegal(String exp) {
         if (exp.equals("")) {
             return false;
@@ -327,7 +402,8 @@ public class CodeChecker {
             //This part is in compileVariable...
 
             //Need to be in a helper function because relevant for global variables as well (lines 193-209)
-            parts = param.split(" ");
+            parts = param.strip().split(" ");
+ //           System.out.println("*** param: "+param+ " parts #:" + parts.length);
             if (parts.length == 3) {
                 if (!parts[0].equals("final")) return ILLEGAL;
                 for (String type : typesOfVariables) {
@@ -344,6 +420,8 @@ public class CodeChecker {
                         temp.add(var);
                     }
                 }
+            } else if (param.strip().equals("")) {
+                continue;
             } else {
                 error = "Illegal method";
                 return ILLEGAL;
@@ -412,8 +490,6 @@ public class CodeChecker {
     }
 
 
-    //int a = 1, b = 7, double = 40;
-    //char a = 5+3;
 
     /**
      * @param variable     the variable we want to check
@@ -423,10 +499,24 @@ public class CodeChecker {
      * @return 0 if the variable is legal, 1 if not, and 2 in case of errors
      */
 
-    //FIXME It should be private, only public for testing
     //TODO check if we can change to stirng line or change calls to this function
+
+    /**
+     * The function that responsible to compile the variables declerations according to type and put them
+     * in the right HashMap.
+     * @param variable
+     * @param type
+     * @param variablesMap
+     * @param finalVal
+     * @return
+     * @throws IllegalNameException
+     * @throws IllegalVariableException
+     * @throws NotFoundException
+     * @throws IllegalExpressionException
+     */
     private int compileVariableDecleration(String variable, String type, HashMap<String, Var> variablesMap,
-                                           boolean finalVal) throws IllegalNameException, IllegalVariableException, NotFoundException, IllegalExpressionException {
+                                           boolean finalVal) throws IllegalNameException,
+            IllegalVariableException, NotFoundException, IllegalExpressionException {
         if (variable.equals("")) {
             throw new NotFoundException();
         }
@@ -442,7 +532,6 @@ public class CodeChecker {
                     token_parts[i] = token_parts[i].strip();
                 }
                 if (checkVariableName(token_parts[NAME]) && !variablesMap.containsKey(token_parts[NAME])) {
-                    //&& !checkVariableExistsInScope(token_parts[NAME])
                     //If we got here, we know that we add a new variable, so - we must check its value
                     if (checkVal(token_parts[VAL_TO_PUT], type)) {
                         Var varToAdd = new Var(token_parts[NAME], type, true, finalVal);
@@ -451,7 +540,6 @@ public class CodeChecker {
                             return ILLEGAL;
                         }
                         variablesMap.put(varToAdd.getName(), varToAdd);
-//                        System.out.println("compiled!"); //Todo- delete when submitting
                     }
                     else {
                         throw new IllegalVariableException();
@@ -469,7 +557,6 @@ public class CodeChecker {
                         return ILLEGAL;
                     }
                     variablesMap.put(varToAdd.getName(), varToAdd);
-//                    System.out.println("Compiled!");
                 } else {
                     throw new IllegalNameException();
                 }
@@ -478,6 +565,14 @@ public class CodeChecker {
         return LEGAL;
     }
 
+    /**
+     * compile a Set value to variables, each variable get the correct type to him. else, throws an exception.
+     * @param variableList - The list oof variables
+     * @return LEGAL if set is correct, else Illegal
+     * @throws IllegalVariableException = The variable is illegal
+     * @throws NotFoundException = A variable not found
+     * @throws IllegalAssigmentException = Illegal Assigment
+     */
     private int compileSetVariable(String variableList) throws IllegalVariableException, NotFoundException,
             IllegalAssigmentException {
         String[] variables = variableList.split(",");
@@ -516,6 +611,12 @@ public class CodeChecker {
         return LEGAL;
     }
 
+    /**
+     * A function that checks if value of a variable is valid, according to Ex'6 description.
+     * @param value
+     * @param type
+     * @return
+     */
     private boolean checkVal(String value, String type) {
         switch (type) {
             case INT:
@@ -563,8 +664,7 @@ public class CodeChecker {
      */
     private boolean checkVariableName(String name) throws IllegalNameException, IllegalExpressionException {
         Matcher illegalName = illegalVariableName.matcher(name);
-        //TODO move pattern somewhere else so compile once
-        Pattern legalNameChars = Pattern.compile("[0-9A-Za-z_]*");
+        //Pattern legalNameChars = Pattern.compile("[0-9A-Za-z_]*");
         Matcher namePattern = legalNameChars.matcher(name);
         if (namePattern.matches()) {
             if (illegalName.matches()) {
@@ -582,6 +682,7 @@ public class CodeChecker {
      * @return true if exists such variable in any scope...
      */
     private Var checkVariableExist(String name) {
+        //System.out.println("checking variable " + name);
         for (int i = index; i >= 0; i--) {
             if (variables.get(i) != null && variables.get(i).containsKey(name)) {
                 return variables.get(i).get(name);
