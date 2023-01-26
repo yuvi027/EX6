@@ -1,4 +1,61 @@
 agam_e
 yuvli027
 
-Hiiiiiiiiii
+File Description:
+CodeChecker- This class is the actual code checker of the program, it gets a file and runs different checks
+on it to see if the code is legal or not.
+Sjavac- This class has the main method that runs the entire program.
+Var- This class is the Var class, which we needed in order to check ad create the variables in our hashmap.
+Exceptions //TODO finish this
+Tests-
+Test1- Check if we accept  declaration of multiple variable of the same type and assignment of their values.
+Test2- Check if we can set a variable with value to a new value based on a different variable of the same type.
+Test3- Check if we can deal with weird spaces in the middle of the line
+Test4- Check to see that a multiple line comment is not legal
+Test5- Check to see if basic methods work
+Test6- Check to see if basic methods work with getting int as a double
+Test7- Check to see if basic methods work with wrong number of parameters
+Test8- Check to see if basic methods work with wrong number of parameters
+Test9- Check to see if basic methods work with wrong parameters
+Test10- Check different function
+Test11- Check to see if basic methods work with wrong parameters
+Test12- Check to see if basic methods work with no tubs
+Test13- Check if we deal properly with final variables
+Test14- Check if we can get en empty char as an assignment
+Test15- Check if we can get a positive value (with +) for an assignment value of an int
+Test16- Check if we can send variables to functions
+Test17- Check to see if a line missing ; is legal
+Test18- Check if we accept an int instead of double for parameter
+Test19- Check if we can accept a final variable as a parameter that doesn't require a final variable
+Test20- Check if we can accept a variable as a parameter that requires a final variable
+
+Design- We created the class Var in order to add all the variables initiated in the file's code. The class CodeChecker
+gets the file, and holds a HashMap with the scope, and a HashMap with the variables of type Var in the scope.
+We also have a HashMap of functions that hold the name of the method and list of parameters we need to get.
+We has some issues with the global variables, so we created a method that runs through the file and first
+adds all the global variables to the list, then we went through the rest of the program. We also had a problem with
+methods that were called before they were declared, so, similar to how we solved the issue with the global variables,
+we went through the file and created the functions after initiating the global variables, then went through the rest
+of the checks as expected. We have a bunch of Exception class so we can raise specific Exceptions and catch them as
+needed.
+
+Implementation Issues: We created a class for the variable, and thought about creating one for method and scopes as
+well, but in the end decided against it, as it seemed to overcomplicate our code too much, and instead checked our
+code line by line. We decided the simplest way to do this would be create an array of lines from the files and run over
+them line by line and check each line if it's legal, and if not then throw an exception that explains the issue.
+
+6.1- We created a bunch of different Exception classes in order to have a specific exception to print out in cases of
+errors. We did this so it will be easier to understand the problem in the file and debug the code there if needed to.
+
+6.2- If we want to support different return types of functions, then all we need to do is instead of check for
+void to define a function, check for all possible return values, and then check if it's a legal function.
+If we wanted to support classes, we could just look at them as big functions, and check that the line does start with
+the keyword class. Furthermore, we would check to see the class contains a constructor (we would add it as a function)
+then when creating instances of the class, we would look to see the constructors match. We would also change the HashMap
+of the functions to have an index of class, and then the HashMap we currently have, and save the functions of the
+class in the proper key.
+
+6.3- We have some regex expressions for checking the variables declarations and instantiations. For example, when we
+declare an int variable, we look to see the type is int, then for a legal name, and legal value in case of assignment
+of values. This is the same for all the variable types we support. We also check for comments or empty lines when
+creating the array of line, and if this is a legal comment, then we delete the line, as we don't need it.

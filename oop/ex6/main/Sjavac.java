@@ -20,10 +20,10 @@ public class Sjavac {
             System.err.println("Wrong parameters number!");
             return;
         }
-        CodeChecker checker = CodeChecker.getInstance();
+        CodeChecker checker = new CodeChecker();
         int num = checker.checkCode(args[FILE_NAME_IND]);
 //    int num = checker.checkCode("test.txt");
-//        int num = checker.checkCode("test.txt");
+//        int num = checker.checkCode("oop/ex6/main/test2.txt");
         Pattern fileEndingPattern = Pattern.compile("\\.sjava$");
         Matcher fileHasCorrectEnding = fileEndingPattern.matcher(args[FILE_NAME_IND]);
         if (!fileHasCorrectEnding.find()) {

@@ -1,0 +1,8 @@
+void f1(int a, double b) {
+		return;
+}
+int a = 5
+void f2() {
+f1(a, 6.7);
+return;
+}
