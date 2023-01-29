@@ -12,7 +12,7 @@ public class Sjavac {
 
     public static void main(String[] args) {
 
-//        Matcher fileHasCorrectEnding = fileEndingPattern.matcher("oop/ex6/main/test2.txt");
+//       Matcher fileHasCorrectEnding = fileEndingPattern.matcher("oop/ex6/main/test2.txt");
 
 
         if (args.length != NUM_OF_ARGS) {
@@ -20,7 +20,8 @@ public class Sjavac {
             System.err.println("Wrong parameters number!");
             return;
         }
-        CodeChecker checker = new CodeChecker();
+        CodeChecker checker  = new CodeChecker();
+        //CodeChecker checker = CodeChecker.getInstance();
         int num = checker.checkCode(args[FILE_NAME_IND]);
 //    int num = checker.checkCode("test.txt");
 //        int num = checker.checkCode("oop/ex6/main/test2.txt");

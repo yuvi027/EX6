@@ -23,8 +23,6 @@ public class CodeChecker {
     private static final String[] typesOfVariables = {"int", "double", "String", "boolean", "char"};
     private static final String ILLEGAL_NAME_REGEX = "_|[0-9].*";
 
-    //    private static final String INT_CORRECT_FORM_REGEX = "^(?:(?:.*?)\\s*(?:=\\s*\\d+)?,?)+?;$";
-//    private static final String INT_REGEX = "^((?:(?:.*?)\\s*(?:=\\s*(\\d+)))?,?)+?;$";
     private static final String INT_REGEX = "(?:\\+|-|)[0-9]+";
     private static final String DOUBLE_REGEX = "(?:\\+|-|)((\\d+.\\d*)|(\\d*.\\d+))" + "|" + INT_REGEX;
     private static final String STRING_REGEX = "\"[^\"]*\"";
@@ -36,7 +34,7 @@ public class CodeChecker {
 
     private static String error;
     private static ArrayList<String> linesOfFile;
-    //    private static CodeChecker codeChecker;
+    private  CodeChecker codeChecker;
     private static Pattern oneLinerComment;
     private static Pattern emptyLinePattern;
     private static Pattern illegalVariableName;
@@ -53,8 +51,7 @@ public class CodeChecker {
 
     //saves the scope, and a hashmap with all the scope's variables name and their type
     private HashMap<Integer, HashMap<String, Var>> variables;
-    //TODO- FIX methods !!!!!!!!!!!!!!!!!!
-    private HashMap<String, ArrayList<Var>> methods; //TODO: consider the relation between methods
+    private HashMap<String, ArrayList<Var>> methods;
     // and variables
 
 
@@ -178,8 +175,8 @@ public class CodeChecker {
      *
      * @param line the line of code we are checking
      * @return 0 if the line is legal, 1 if not, and 2 in case of errors
-     * @throws Exception
-     */
+     * @throws FileException - Invalid file exception
+      */
     private int compileLine(String line) throws FileException {
         if (line.contains("/*") || line.contains("/**") || line.contains("//") || line.contains("*/")) {
             throw new IllegalLineException();
@@ -226,9 +223,6 @@ public class CodeChecker {
                     if (index > 1) {
                         throw new IllegalFunctionException();
                     } else {
-
-                        // TODO ----- need to move this part to first run (tests 427 and 452), order of
-                        //  declaration of the function after the call to the function
                         variables.put(++index, new HashMap<>());
                         return compileMethod(line.substring(5));
                     }
@@ -239,7 +233,6 @@ public class CodeChecker {
             }
             throw new IllegalLineException();
         } else if (line.charAt(line.length() - 1) == '}') {
-            //TODO: check
             if (index == 1) {
                 throw new IllegalLineException();
             }
@@ -270,7 +263,7 @@ public class CodeChecker {
 
         for (int i = 0; i < vars.size(); i++) {
             params[i] = params[i].strip();
-            //           System.out.println("Checking variable: " + vars.get(i) + " ---- " + params[i]);
+            //System.out.println("Checking variable: " + vars.get(i) + " ---- " + params[i]);
 
             // Check if we got a variable name
             Var curVar = checkVariableExist(params[i]);
@@ -286,7 +279,7 @@ public class CodeChecker {
                     case "double":
                         //Matcher intTDouble =intPattern.matcher(params[i]);
                         Matcher doubleMatcher = doublePattern.matcher(params[i]);
-                        if (!doubleMatcher.matches()) { //intTDouble.matches() ||
+                        if (!doubleMatcher.matches()) {
                             throw new IllegalFunctionException();
                         }
                         break;
@@ -298,9 +291,7 @@ public class CodeChecker {
                         break;
                     case "boolean":
                         Matcher boolMatcher = booleanPattern.matcher(params[i]);
-                        //Matcher intToType = intPattern.matcher(params[i]);
-                        //Matcher doubleType = doublePattern.matcher(params[i]);
-                        if (!boolMatcher.matches()) { //|| intToType.matches() || doubleType.matches()
+                        if (!boolMatcher.matches()) {
                             throw new IllegalFunctionException();
                         }
                         break;
@@ -387,17 +378,10 @@ public class CodeChecker {
     //When we check if a function is legal, we must check some things, one of them is to add only the LOCAL
     // variables to the dictionary, we also know that they have a value that legal.
     private int compileMethod(String line) throws IllegalFunctionException {
-        //TODO- check function...
-
-        //TODO- check regex for proper function definition
-        //TODO- also check where we call functions in the code
-        // Split the code into void function name, and params
         String[] parts = line.split("[()]");
         //Save the function name
         String name = parts[0];
         //Start to work on the params
-        //Is the params is a variables of the function? It should be on=ly for local variables, the params
-        // of the function are initialized by this part...
         String[] params = parts[1].split(",");
 
 
@@ -409,10 +393,6 @@ public class CodeChecker {
         //Go through the params and see if they are legal, if so add them to temp
         for (String param : params) {
             //first check if the param is final, then check for validity
-
-            //This part is in compileVariable...
-
-            //Need to be in a helper function because relevant for global variables as well (lines 193-209)
             parts = param.strip().split(" ");
             //           System.out.println("*** param: "+param+ " parts #:" + parts.length);
             if (parts.length == 3) {
@@ -455,14 +435,14 @@ public class CodeChecker {
      * @param line the line of initialization of the variable
      * @return 0 if the initialization is legal, 1 if not, and 2 in case of errors
      */
-    //TODO- maybe we should move some of the code from the compile here, because we'll need it a lot...
-    //This will be a subroutine of compileVariable...
+    /*
     private int checkVarValue(String line) {
-        String[] words = line.split(" "); //TODO- make into regex, so we can also check for (example) num=5
+        String[] words = line.split(" "); //make into regex, so we can also check for (example) num=5
         String type = variables.get(index).get(words[0]).getType();
-        //TODO- check based on the initialization and the type of the var if the initialization is legal
+        //check based on the initialization and the type of the var if the initialization is legal
         return LEGAL;
     }
+     */
 
     /**
      * Try to open the file and read the lines
@@ -486,9 +466,9 @@ public class CodeChecker {
                 }
                 linesOfFile.add(s);
             }
-            //TODO- delete when submitting
-//            System.out.println(linesOfFile.toString());
-        } catch (IOException e) {//TODO: add more types of exceptions
+
+//           System.out.println(linesOfFile.toString());
+        } catch (IOException e) {
             throw e;
         }
         return LEGAL;
@@ -502,16 +482,6 @@ public class CodeChecker {
         return error;
     }
 
-
-    /**
-     * @param variable     the variable we want to check
-     * @param type         the type of the variable
-     * @param variablesMap the HashMap we want to insert the variable into (based on the scope)
-     * @param finalVal     whether the variable is final or not
-     * @return 0 if the variable is legal, 1 if not, and 2 in case of errors
-     */
-
-    //TODO check if we can change to stirng line or change calls to this function
 
     /**
      * The function that responsible to compile the variables declerations according to type and put them
